@@ -13,6 +13,8 @@ export default function sketch (p) {
     let cocoDrawings = [];
     let faceDrawings = [];
 
+    let isDetecting = false
+    let tick, lastTick = new Date().getTime()
 
     function showCocoSSDResults(results) {
         cocoDrawings = results;
@@ -35,7 +37,7 @@ export default function sketch (p) {
                 minWidth: 1280,
                 minHeight: 720
               },
-              optional: [{ maxFrameRate: 40 }]
+              optional: [{ maxFrameRate: 10 }]
             },
             audio: false
           };
@@ -127,19 +129,25 @@ export default function sketch (p) {
                 p.rect(drawing.detection.box._x, drawing.detection.box._y, drawing.detection.box._width, drawing.detection.box._height);
             }
         });
-        faceapi.detectAllFaces(capture.id()).withAgeAndGender().withFaceExpressions().then((data) => {
-            showFaceDetectionData(data);
-        });
-
-        if(capture.loadedmetadata) {
-            if (cocossdModel) {
-                cocossdModel
-                .detect(document.getElementById("video_element"))
-                .then(showCocoSSDResults)
-                .catch((e) => {
-                    console.log("Exception : ", e);
-                });
+        tick = new Date().getTime()
+        if ((lastTick + 2000 < tick) && !isDetecting) {
+            lastTick = tick
+            isDetecting = true
+            faceapi.detectAllFaces(capture.id()).withAgeAndGender().withFaceExpressions().then((data) => {
+                showFaceDetectionData(data);
+                isDetecting = false
+            });
+            if(capture.loadedmetadata) {
+                if (cocossdModel) {
+                    cocossdModel
+                    .detect(document.getElementById("video_element"))
+                    .then(showCocoSSDResults)
+                    .catch((e) => {
+                        console.log("Exception : ", e);
+                    });
+                }
             }
         }
+
     }
   };
